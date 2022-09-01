@@ -79,7 +79,9 @@ final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
         willDisplay cell: UICollectionViewCell,
         forItemAt indexPath: IndexPath
     ) {
-        delegate(for: indexPath)?.willDisplay(indexPath: indexPath)
+        guard let delegate = delegate(for: indexPath) else { return }
+        cell.appearanceDelegate = delegate
+        delegate.willDisplay(indexPath: indexPath)
     }
 
     func collectionView(
@@ -87,7 +89,8 @@ final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
         didEndDisplaying cell: UICollectionViewCell,
         forItemAt indexPath: IndexPath
     ) {
-        delegate(for: indexPath)?.didEndDisplay(indexPath: indexPath)
+        cell.appearanceDelegate?.didEndDisplay(indexPath: indexPath)
+        cell.appearanceDelegate = nil
     }
 
     // MARK: - UIScrollViewDelegate
@@ -329,5 +332,70 @@ final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
         }
         
         return super.responds(to: aSelector)
+    }
+}
+
+private extension UICollectionViewCell {
+    private static var appearanceDelegateKey = 0
+
+    // Storing a lifecycleDelegate is needed to have appearance/disappearance events in sync
+    // Because batch updates make new cell appearing first and then call disappearance for old one
+    // But at this point new view model is already set so wrong viewmodel receives an event
+
+    var appearanceDelegate: CollectionComponentViewModelLifecycleProtocol? {
+        get {
+            let container = objc_getAssociatedObject(
+                self,
+                &UICollectionViewCell.appearanceDelegateKey
+            ) as? Container
+            return container?.object as? CollectionComponentViewModelLifecycleProtocol
+        }
+        set {
+            let params: (object: AnyObject, policy: Container.Policy)?
+            if let newValueObject = newValue as? (AnyObject & CollectionComponentViewModelLifecycleProtocol) {
+                params = (newValueObject, .weak)
+            } else if let newValue = newValue {
+                params = (newValue as AnyObject, .strong)
+            } else {
+                params = nil
+            }
+            objc_setAssociatedObject(
+                self,
+                &UICollectionViewCell.appearanceDelegateKey,
+                params.map {
+                    Container(
+                        object: $0.object,
+                        policy: $0.policy
+                    )
+                },
+                .OBJC_ASSOCIATION_RETAIN_NONATOMIC
+            )
+        }
+    }
+}
+
+private final class Container {
+    enum Policy { case weak, strong }
+
+    private let policy: Policy
+    private weak var weakRefence: AnyObject?
+    private var strongReference: AnyObject?
+
+    var object: AnyObject? {
+        switch policy {
+        case .weak: return weakRefence
+        case .strong: return strongReference
+        }
+    }
+
+    init(
+        object: AnyObject,
+        policy: Policy
+    ) {
+        self.policy = policy
+        switch policy {
+        case .weak: weakRefence = object
+        case .strong: strongReference = object
+        }
     }
 }
