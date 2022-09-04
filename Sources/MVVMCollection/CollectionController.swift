@@ -9,18 +9,21 @@ public protocol CollectionControllerProtocol: AnyObject {
     func detach()
     func update(
         with data: CollectionControllerData,
-        animated: Bool
+        animated: Bool,
+        completion: (() -> Void)?
     )
 }
 
 extension CollectionControllerProtocol {
     public func update(
         with data: CollectionControllerData,
-        animated: Bool = false
+        animated: Bool = false,
+        completion: (() -> Void)? = nil
     ) {
         update(
             with: data,
-            animated: animated
+            animated: animated,
+            completion: completion
         )
     }
 }
@@ -68,11 +71,13 @@ public final class CollectionController: CollectionControllerProtocol {
 
     public func update(
         with data: CollectionControllerData,
-        animated: Bool
+        animated: Bool,
+        completion: (() -> Void)?
     ) {
         onUpdate(
             with: data,
-            animated: animated
+            animated: animated,
+            completion: completion
         )
     }
 
@@ -100,7 +105,8 @@ public final class CollectionController: CollectionControllerProtocol {
 
     private func onUpdate(
         with newData: CollectionControllerData,
-        animated: Bool
+        animated: Bool,
+        completion: (() -> Void)?
     ) {
         data = newData
         dataSource?.apply(
@@ -108,6 +114,7 @@ public final class CollectionController: CollectionControllerProtocol {
             animatingDifferences: animated,
             completion: { [viewModelStorage] in
                 viewModelStorage.removeUnusedViewModels(for: newData)
+                completion?()
             }
         )
     }
@@ -175,7 +182,11 @@ public final class CollectionController: CollectionControllerProtocol {
         { [weak self] item, animated in
             guard let dataSource = self?.dataSource else { return }
             var snapshot = dataSource.snapshot()
-            snapshot.reloadItems([item])
+            if #available(iOS 15.0, *) {
+                snapshot.reconfigureItems([item])
+            } else {
+                snapshot.reloadItems([item])
+            }
             dataSource.apply(
                 snapshot,
                 animatingDifferences: animated
