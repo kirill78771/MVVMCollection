@@ -37,7 +37,7 @@ public final class CollectionComponentRegistry {
                 let viewModel = descriptor.makeViewModel(item)
                 if let reloadableViewModel = viewModel as? CollectionComponentViewModelReloadableProtocol {
                     reloadableViewModel.storeReloadToken(
-                        BlockReloadToken { [weak self] animated in
+                        BlockReloadToken { animated in
                             guard let itemReloader = self?.itemReloader else {
                                 assertionFailure("itemReloader must be set in advance")
                                 return
