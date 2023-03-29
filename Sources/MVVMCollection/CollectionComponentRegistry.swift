@@ -38,7 +38,11 @@ public final class CollectionComponentRegistry {
                 if let reloadableViewModel = viewModel as? CollectionComponentViewModelReloadableProtocol {
                     reloadableViewModel.storeReloadToken(
                         BlockReloadToken { animated in
-                            guard let itemReloader = self?.itemReloader else {
+                            guard let self = self else {
+                                print("[MVVMCollection] WARNING: Attempted to reload \(item) while CollectionController already deallocated")
+                                return
+                            }
+                            guard let itemReloader = self.itemReloader else {
                                 assertionFailure("itemReloader must be set in advance")
                                 return
                             }
