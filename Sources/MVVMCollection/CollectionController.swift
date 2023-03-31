@@ -112,11 +112,9 @@ public final class CollectionController: CollectionControllerProtocol {
         dataSource?.apply(
             newData.snapshot,
             animatingDifferences: animated,
-            completion: { [viewModelStorage] in
-                viewModelStorage.removeUnusedViewModels(for: newData)
-                completion?()
-            }
+            completion: completion
         )
+        viewModelStorage.removeUnusedViewModels(for: newData)
     }
 
     private func updateDataSource(
