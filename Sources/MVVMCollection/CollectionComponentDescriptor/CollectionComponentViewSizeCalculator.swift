@@ -29,6 +29,7 @@ public final class CollectionComponentAutolayoutSizeCalculator<
     private let viewFactory: ViewFactory
     private let viewModelAssigner: ViewModelAssigner
     private let minSize: CGSize
+    private let fillsThroughAxis: Bool
 
     private lazy var view = viewFactory.makeView()
     private lazy var cache = [SizeCacheKey: CGSize]()
@@ -36,11 +37,13 @@ public final class CollectionComponentAutolayoutSizeCalculator<
     public init(
         viewFactory: ViewFactory,
         viewModelAssigner: ViewModelAssigner,
-        minSize: CGSize = .zero
+        minSize: CGSize = .zero,
+        fillsThroughAxis: Bool = true
     ) {
         self.viewFactory = viewFactory
         self.viewModelAssigner = viewModelAssigner
         self.minSize = minSize
+        self.fillsThroughAxis = fillsThroughAxis
     }
     
     public func calculateSize(
@@ -69,6 +72,8 @@ public final class CollectionComponentAutolayoutSizeCalculator<
             height: collectionView.bounds.size.height - insets.top - insets.bottom
         )
 
+        let nonScrollDirectionPriority: UILayoutPriority = fillsThroughAxis ? .required : .fittingSizeLevel
+
         func calculateSize() -> CGSize {
             viewModelAssigner.assignViewModel(
                 viewModel,
@@ -83,15 +88,21 @@ public final class CollectionComponentAutolayoutSizeCalculator<
                 )
                 view.setSizeAndLayout(fittingSize)
 
-                let calculatedHeight = view.systemLayoutSizeFitting(
+                let calculatedSize = view.systemLayoutSizeFitting(
                     fittingSize,
-                    withHorizontalFittingPriority: .required,
+                    withHorizontalFittingPriority: nonScrollDirectionPriority,
                     verticalFittingPriority: .fittingSizeLevel
-                ).height.rounded(.awayFromZero)
+                )
 
                 return CGSize(
-                    width: max(minSize.width, fittingSize.width),
-                    height: max(minSize.height, calculatedHeight)
+                    width: max(
+                        minSize.width,
+                        fillsThroughAxis ? fittingSize.width : calculatedSize.roundedWidth
+                    ),
+                    height: max(
+                        minSize.height,
+                        calculatedSize.roundedHeight
+                    )
                 )
 
             case .horizontal:
@@ -101,15 +112,21 @@ public final class CollectionComponentAutolayoutSizeCalculator<
                 )
                 view.setSizeAndLayout(fittingSize)
 
-                let calculatedWidth = view.systemLayoutSizeFitting(
+                let calculatedSize = view.systemLayoutSizeFitting(
                     fittingSize,
                     withHorizontalFittingPriority: .fittingSizeLevel,
-                    verticalFittingPriority: .required
-                ).width.rounded(.awayFromZero)
+                    verticalFittingPriority: nonScrollDirectionPriority
+                )
 
                 return CGSize(
-                    width: max(minSize.width, calculatedWidth),
-                    height: max(minSize.height, fittingSize.height)
+                    width: max(
+                        minSize.width,
+                        calculatedSize.roundedWidth
+                    ),
+                    height: max(
+                        minSize.height,
+                        fillsThroughAxis ? fittingSize.height : calculatedSize.roundedHeight
+                    )
                 )
 
             @unknown default:
@@ -124,6 +141,7 @@ public final class CollectionComponentAutolayoutSizeCalculator<
                 contentHash: hashableViewModel.contentHash,
                 maxSize: maxSize,
                 minSize: minSize,
+                fillsThroughAxis: fillsThroughAxis,
                 scrollDirection: layout.scrollDirection
             )
             if let cachedSize = cache[cacheKey] {
@@ -147,6 +165,7 @@ private struct SizeCacheKey: Hashable {
     let maxSizeHeight: CGFloat
     let minSizeWidth: CGFloat
     let minSizeHeight: CGFloat
+    let fillsThroughAxis: Bool
     let scrollDirection: UICollectionView.ScrollDirection.RawValue
 
     init(
@@ -154,6 +173,7 @@ private struct SizeCacheKey: Hashable {
         contentHash: Int,
         maxSize: CGSize,
         minSize: CGSize,
+        fillsThroughAxis: Bool,
         scrollDirection: UICollectionView.ScrollDirection
     ) {
         self.viewModelType = String(reflecting: viewModelType)
@@ -162,6 +182,7 @@ private struct SizeCacheKey: Hashable {
         self.maxSizeHeight = maxSize.height
         self.minSizeWidth = minSize.width
         self.minSizeHeight = minSize.height
+        self.fillsThroughAxis = fillsThroughAxis
         self.scrollDirection = scrollDirection.rawValue
     }
 }
@@ -171,5 +192,14 @@ private extension UIView {
         frame.size = size
         setNeedsLayout()
         layoutIfNeeded()
+    }
+}
+
+private extension CGSize {
+    var roundedHeight: CGFloat {
+        height.rounded(.awayFromZero)
+    }
+    var roundedWidth: CGFloat {
+        width.rounded(.awayFromZero)
     }
 }
