@@ -1,6 +1,6 @@
 import UIKit
 
-public protocol CollectionComponentViewFactoryProtocol {
+@MainActor public protocol CollectionComponentViewFactoryProtocol {
     associatedtype View: UIView
     func makeView() -> View
 }

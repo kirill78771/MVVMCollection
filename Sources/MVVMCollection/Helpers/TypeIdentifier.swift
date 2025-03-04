@@ -17,7 +17,7 @@ struct TypeIdentifier: Hashable {
 }
 
 extension TypeIdentifier {
-    init(_ anyHashable: AnyHashable) {
-        self.underlyingType = type(of: anyHashable.base)
+    init(_ anySendableHashable: AnySendableHashable) {
+        self.underlyingType = type(of: anySendableHashable.wrappedValue.base)
     }
 }

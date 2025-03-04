@@ -3,10 +3,10 @@ import Foundation
 protocol ViewModelStorageProtocol: AnyObject {
     func setViewModel(
         viewModel: Any,
-        for item: AnyHashable
+        for item: AnySendableHashable
     )
     func getViewModel(
-        for item: AnyHashable
+        for item: AnySendableHashable
     ) -> Any?
     func removeUnusedViewModels(
         for data: CollectionControllerData
@@ -15,17 +15,17 @@ protocol ViewModelStorageProtocol: AnyObject {
 
 final class ViewModelStorage: ViewModelStorageProtocol {
 
-    private var storage = [AnyHashable: Any]()
+    private var storage = [AnySendableHashable: Any]()
 
     func setViewModel(
         viewModel: Any,
-        for item: AnyHashable
+        for item: AnySendableHashable
     ) {
         storage[item] = viewModel
     }
 
     func getViewModel(
-        for item: AnyHashable
+        for item: AnySendableHashable
     ) -> Any? {
         storage[item]
     }

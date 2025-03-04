@@ -1,6 +1,6 @@
 import UIKit
 
-public final class CollectionComponentRegistry {
+@MainActor public final class CollectionComponentRegistry {
     var cellRegistrators = [CellRegistrator]()
     var cellProviders = [TypeIdentifier: CellProvider]()
     var cellSizeProviders = [TypeIdentifier: CellSizeProvider]()
@@ -23,18 +23,18 @@ public final class CollectionComponentRegistry {
             )
         })
 
-        let obtainViewModel: (AnyHashable) -> ViewModel = { [weak self] item in
+        let obtainViewModel: (AnySendableHashable) -> ViewModel = { [weak self] item in
             /// UICollectionViewDiffableDataSource forces type erasure for multiple items type support
-            let item = item.base as! Item
+            let castedItem = item.wrappedValue.base as! Item
 
             guard let viewModelStorage = self?.viewModelStorage else {
                 assertionFailure("viewModelStorage must be set in advance")
-                return descriptor.makeViewModel(item)
+                return descriptor.makeViewModel(castedItem)
             }
             if let viewModel = viewModelStorage.getViewModel(for: item) as? ViewModel {
                 return viewModel
             } else {
-                let viewModel = descriptor.makeViewModel(item)
+                let viewModel = descriptor.makeViewModel(castedItem)
                 if let reloadableViewModel = viewModel as? CollectionComponentViewModelReloadableProtocol {
                     reloadableViewModel.storeReloadToken(
                         BlockReloadToken { animated in

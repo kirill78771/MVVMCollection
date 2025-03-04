@@ -1,6 +1,6 @@
 import UIKit
 
-public protocol CollectionControllerProtocol: AnyObject {
+@MainActor public protocol CollectionControllerProtocol: AnyObject {
     var scrollViewDelegate: UIScrollViewDelegate? { get set }
     var flowLayoutDelegate: UICollectionViewDelegateFlowLayout? { get set }
     var supplementaryViewProvider: SupplementaryViewProvider? { get set }
@@ -170,7 +170,7 @@ public final class CollectionController: CollectionControllerProtocol {
 
     private func performWithItem<Result>(
         at indexPath: IndexPath,
-        block: (CollectionController, AnyHashable) -> Result?
+        block: (CollectionController, AnySendableHashable) -> Result?
     ) -> Result? {
         guard let item = self.dataSource?.itemIdentifier(for: indexPath) else { return nil }
         return block(self, item)
@@ -181,9 +181,9 @@ public final class CollectionController: CollectionControllerProtocol {
             guard let dataSource = self?.dataSource else { return }
             var snapshot = dataSource.snapshot()
             if #available(iOS 15.0, *) {
-                snapshot.reconfigureItems([item])
+                snapshot.reconfigureItems([AnySendableHashable(item)])
             } else {
-                snapshot.reloadItems([item])
+                snapshot.reloadItems([AnySendableHashable(item)])
             }
             dataSource.apply(
                 snapshot,

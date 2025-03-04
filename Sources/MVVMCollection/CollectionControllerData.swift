@@ -10,10 +10,10 @@ public final class CollectionControllerData {
     var snapshot = Snapshot()
 
     public init(items: [AnyHashable]) {
-        let section = 0
+        let section = AnySendableHashable(0)
         snapshot.appendSections([section])
         snapshot.appendItems(
-            items,
+            items.map { AnySendableHashable($0) },
             toSection: section
         )
     }
@@ -22,10 +22,11 @@ public final class CollectionControllerData {
         sections: [Section]
     ) {
         sections.forEach { section in
-            snapshot.appendSections([section])
+            let anySendableSection = AnySendableHashable(section)
+            snapshot.appendSections([anySendableSection])
             snapshot.appendItems(
-                section.items,
-                toSection: section
+                section.items.map { AnySendableHashable($0) },
+                toSection: anySendableSection
             )
         }
     }
