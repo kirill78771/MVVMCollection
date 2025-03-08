@@ -1,20 +1,20 @@
 import UIKit
 
-typealias DataSource = UICollectionViewDiffableDataSource<AnyHashable, AnyHashable>
-typealias Snapshot = NSDiffableDataSourceSnapshot<AnyHashable, AnyHashable>
+typealias DataSource = UICollectionViewDiffableDataSource<AnySendableHashable, AnySendableHashable>
+typealias Snapshot = NSDiffableDataSourceSnapshot<AnySendableHashable, AnySendableHashable>
 
 typealias CellRegistrator = (
     _ collectionView: UICollectionView
 ) -> Void
 
 typealias CellProvider = (
-    _ item: AnyHashable,
+    _ item: AnySendableHashable,
     _ collectionView: UICollectionView,
     _ indexPath: IndexPath
 ) -> UICollectionViewCell
 
 typealias CellSizeProvider = (
-    _ item: AnyHashable,
+    _ item: AnySendableHashable,
     _ collectionView: UICollectionView,
     _ layout: UICollectionViewLayout,
     _ indexPath: IndexPath
@@ -31,7 +31,7 @@ typealias CellSizeAtIndexPathProvider = (
 ) -> CGSize?
 
 typealias ItemReloader = (
-    _ item: AnyHashable,
+    _ item: AnySendableHashable,
     _ animated: Bool
 ) -> Void
 

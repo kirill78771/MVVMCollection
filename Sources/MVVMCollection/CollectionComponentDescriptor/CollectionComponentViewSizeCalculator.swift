@@ -2,7 +2,7 @@ import UIKit
 
 /// Works only with UICollectionViewFlowLayout
 /// For any custom layout it will not be used
-public protocol CollectionComponentViewSizeCalculatorProtocol {
+@MainActor public protocol CollectionComponentViewSizeCalculatorProtocol {
     associatedtype ViewModel
 
     func calculateSize(

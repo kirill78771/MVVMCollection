@@ -1,11 +1,11 @@
 import UIKit
 
-protocol CollectionViewDelegateProtocol: UICollectionViewDelegateFlowLayout {
+@MainActor protocol CollectionViewDelegateProtocol: UICollectionViewDelegateFlowLayout {
     var scrollViewDelegate: UIScrollViewDelegate? { get set }
     var flowLayoutDelegate: UICollectionViewDelegateFlowLayout? { get set }
 }
 
-final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
+@MainActor final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
     weak var scrollViewDelegate: UIScrollViewDelegate?
     weak var flowLayoutDelegate: UICollectionViewDelegateFlowLayout?
 
@@ -314,24 +314,26 @@ final class CollectionViewDelegate: NSObject, CollectionViewDelegateProtocol {
 
     // MARK: - Message forwarding
 
-    override func responds(to aSelector: Selector!) -> Bool {
-        let cls = CollectionViewDelegate.self
-        if cls.flowLayoutDelegateSelectors.contains(aSelector) {
-            if aSelector == cls.sizeSelector {
+    nonisolated override func responds(to aSelector: Selector!) -> Bool {
+        return MainActor.assumeIsolated {
+            let cls = CollectionViewDelegate.self
+            if cls.flowLayoutDelegateSelectors.contains(aSelector) {
+                if aSelector == cls.sizeSelector {
+                    return true
+                }
+                return self.flowLayoutDelegate?.responds(to: aSelector) ?? false
+            }
+
+            if cls.scrollViewDelegateSelectors.contains(aSelector) {
+                return self.scrollViewDelegate?.responds(to: aSelector) ?? false
+            }
+
+            if cls.selfCollectionViewDelegateSelectors.contains(aSelector) {
                 return true
             }
-            return self.flowLayoutDelegate?.responds(to: aSelector) ?? false
+            
+            return super.responds(to: aSelector)
         }
-
-        if cls.scrollViewDelegateSelectors.contains(aSelector) {
-            return self.scrollViewDelegate?.responds(to: aSelector) ?? false
-        }
-
-        if cls.selfCollectionViewDelegateSelectors.contains(aSelector) {
-            return true
-        }
-        
-        return super.responds(to: aSelector)
     }
 }
 
