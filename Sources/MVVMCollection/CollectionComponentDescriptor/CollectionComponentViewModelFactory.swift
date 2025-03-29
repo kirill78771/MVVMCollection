@@ -1,6 +1,6 @@
 import Foundation
 
-public protocol CollectionComponentViewModelFactoryProtocol {
+@MainActor public protocol CollectionComponentViewModelFactoryProtocol {
     associatedtype Item
     associatedtype ViewModel
 
